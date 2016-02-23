@@ -1,0 +1,88 @@
+%% тест пачки импульсов
+clc;
+clear all;
+
+%% посчитать шумы на входе 
+K = 1.3806 * 10^-23; % постоянная Больцмана
+Temperature = 293;   % температура в Кельвина
+delta_f = 5*10^6;
+R_om = 50;
+Noise = 4*K*Temperature * delta_f*R_om ; % sqrt (спектральная мощность шума) = сигма
+K_noise = 2;
+sigma = sqrt(K_noise*Noise);
+
+%% задание тестового сигнала
+T = 100*10^(-6);    % период повторения
+N = 16;    % количество импульсов в пачке
+
+A_s1 = 317*5 * sigma;
+A_s2 = 5 * sigma;
+
+Tau1 = 3*10^(-6);
+t_target1 = 50*10^(-6);
+Fdop_s1 = 0.5/(T*N);
+
+Tau2 = 1*10^(-6);
+t_target2 = 50*10^(-6);
+Fdop_s2 = 1/(T*N);
+
+Fs = 100e6;  % частота выборки
+Nbit = 29;
+
+%% определяем структуру входных данных
+signal_struct_Mx = struct(  'Fs',               Fs,                  ... % частота выборки
+                            'F',                0,                   ... % частота cигнала
+                            ...    
+                            'N',                N,                      ... % количество импульсов в пачке
+                            'T',                T,                      ... % период повторения
+                            ...
+                            'Tau1',             Tau1,              ... % длительность импульса 1
+                            't_target1',        t_target1,            ... % задержка импульса 1   
+                            'A_s1',              A_s1,                     ... % амплитуда сигнала 1 
+                            'phi_s1',            0,                     ... % начальная фаза сигнала 1 
+                            'Fdop_s1',           Fdop_s1,       ... % частота доплера сигнала 1       
+                            'A_p1',              0.0,                   ... % амплитуда помехи 1 
+                            'phi_p1',            0,                     ... % начальная фаза помехи 1 
+                            'Fdop_p1',           8/(T*N),                     ... % частота доплера помехи 1  
+                             ...
+                            'Tau2',             Tau2,              ... % длительность импульса 2
+                            't_target2',        t_target2,              ... % задержка импульса 2   
+                            'A_s2',              A_s2,                     ... % амплитуда сигнала 2 
+                            'phi_s2',            0,                     ... % начальная фаза сигнала 2 
+                            'Fdop_s2',           Fdop_s2,               ... % частота доплера сигнала 2       
+                            'A_p2',              0,                   ... % амплитуда помехи 2 
+                            'phi_p2',            0,                     ... % начальная фаза помехи 2
+                            'Fdop_p2',           5/(T*N),               ... % частота доплера помехи 2                          
+                            ...
+                            'sigma_1',          sigma,                    ... % сигма шума 
+                            'flag_noise_on',    1,                      ... % включить шум 1 
+                            'flag_signal_on',    1,                     ... % включить сигнал 1                             
+                            ...
+                            'Nbit',             Nbit,                     ... % количество бит
+                            'Vp',               1                       ... % диапазон
+                            );
+
+
+%% генерация входного сигнала  с нормальными законом распределения шума.
+flag_draw =1;
+[ Signal_noise_in_complex ] = build_signal_MX_kv(signal_struct_Mx, flag_draw);
+
+%% сохранение входных данных в файл
+dlmwrite('Signal_noise_in_complex.txt',Signal_noise_in_complex', 'newline', 'pc');
+save('Signal_noise_in_complex','Signal_noise_in_complex' );
+
+ K_dec = 10 ; % кофф децимации, определяется ранее в фазовом детекторе.
+ KTNP = ceil(T*Fs/K_dec); % количество дискрет за период повторения.
+ 
+%% доплеровская фильтрация
+ flag_draw = 1;
+ flag_bb = 1;
+% 
+ if N >=2
+ signal_doppler_MX = doppler_Mx_new(Signal_noise_in_complex,KTNP, N, flag_draw, flag_bb);
+ end
+ 
+%% сохранение выходных данных в файл
+dlmwrite('signal_doppler_MX.txt', signal_doppler_MX , 'delimiter', '\t', 'precision', 10);
+save('signal_doppler_MX','signal_doppler_MX' );
+

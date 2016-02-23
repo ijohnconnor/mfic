@@ -1,0 +1,107 @@
+%Тесты для доплеровской обработки.
+% Очистка памяти
+clc;
+clear all;
+%close all;
+
+
+str_out=['/home/andy/doppler_test/matlab/tabl3.txt'];
+fid = fopen(str_out,'w');
+
+
+N=16;
+K = 1;
+NFFT = N*K;
+M = NFFT - N;
+koff_win = 0.5;
+
+k=1:N;
+A_1 = 0.1;
+A_2 = 0.5;
+
+phi1 = 0;
+phi2 = 0;
+omega1 = 2.0;
+omega2 = 0.0;
+
+S_1 = A_1 * exp(1i*(2*pi/N *k * omega1 + phi1));
+S_2 = A_2 * exp(1i*(2*pi/N *k * omega2 + phi2));
+
+S_k = S_1 + S_2;
+D_float =[S_k zeros(1,M)];
+
+Raz = 22;
+D =  uencode(D_float,Raz,1,'signed');
+
+
+
+[V F] = func_doppler(D, NFFT,N, koff_win);
+
+
+str1=sprintf('A_1 = %2.1f omega_1=%2.1f  phi_1=%2.1f  A_2 = %2.1f omega_2=%2.1f  phi_2=%2.1f,  NFFT=%2d N=%2d  koff_{win}=%2.1f \n',A_1,omega1,phi1,A_2,omega2,phi2,NFFT,N,koff_win);
+
+     %% Вывод результатов
+        
+figure(1);     
+subplot(5,1,1);
+plot(real(D),'-+');
+xlabel('a) real(D)');
+title(str1);
+grid on;
+
+subplot(5,1,2);
+plot(imag(D),'-+');
+xlabel('b) imag(D)');
+grid on;
+
+subplot(5,1,3);
+stem(real(F));
+xlabel('c) real(F)');
+grid on;
+
+subplot(5,1,4);
+stem(imag(F));
+xlabel('d) imag(F)');
+grid on;
+
+
+subplot(5,1,5);
+stem(V);
+xlabel('e) V');
+grid on;
+
+  
+  %% Вывод результатов
+
+fprintf(fid, str1 );
+            
+            fprintf(fid,'\n Входные данные D real \n');       
+
+            for i=0:3;
+            fprintf(fid,' От  %2.1d  до  %2.1d \n', 4*i+1, 4*i+4);   
+            fprintf(fid,'%10.1d ',real(D(4*i+1 : 4*i+4)));          
+            fprintf(fid,'\n');
+            end
+            
+            fprintf(fid,'\n Входные данные D imag \n');       
+
+            for i=0:3;
+            fprintf(fid,' От  %2.1d  до  %2.1d \n', 4*i+1, 4*i+4);   
+            fprintf(fid,'%10.1d ',imag(D(4*i+1 : 4*i+4)));
+            fprintf(fid,'\n');
+            end
+            
+             
+            fprintf(fid,'\n Выходные данные V \n');
+
+            for i=0:3;
+            fprintf(fid,' От  %2.1d  до  %2.1d \n', 4*i+1, 4*i+4); 
+            fprintf(fid,'%10.1d  ', ceil(V(4*i+1: 4*i+4)));
+            fprintf(fid,'\n'); 
+            end
+        
+  
+   fclose(fid);
+
+
+

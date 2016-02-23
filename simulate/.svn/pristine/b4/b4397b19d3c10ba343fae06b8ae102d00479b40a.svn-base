@@ -1,0 +1,11 @@
+function y = func_wmod_bb (v,MMax,bt)
+
+ y1 = func_hann_bb ( v, MMax,bt) ;
+ y  = func_mdif_bb ( v, MMax,bt) ;
+ ymax = 0;
+ 
+ 
+ for n=1:2*MMax
+         y(n) = real(y(n)) + abs(y1(n));
+         
+ end;        

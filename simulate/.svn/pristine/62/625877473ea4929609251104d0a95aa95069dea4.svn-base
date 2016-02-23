@@ -1,0 +1,7 @@
+function [V F] = func_doppler(D, NFFT, N, koff_win)
+
+F = fft(double(D)); 
+V = func_bb_new( F, NFFT,N, koff_win );
+
+end
+

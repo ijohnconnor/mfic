@@ -1,0 +1,127 @@
+function [ Signal_noise_in_complex ] = build_signal_MX_kv(signal_struct_Mx, flag_draw)
+
+Fs = signal_struct_Mx.Fs;  % частота выборки
+F = signal_struct_Mx.F;  % промежуточная частота сигнала
+N = signal_struct_Mx.N ; % количество импульсов в пачке
+T = signal_struct_Mx.T ; % период повторения
+
+Tau1 = signal_struct_Mx.Tau1 ; % длительность импульса 1 c параметрами
+t_target1 = signal_struct_Mx.t_target1;
+
+A_s1 = signal_struct_Mx.A_s1;
+phi_s1 = signal_struct_Mx.phi_s1; 
+Fdop_s1 = signal_struct_Mx.Fdop_s1;
+
+A_p1 = signal_struct_Mx.A_p1;
+phi_p1 = signal_struct_Mx.phi_p1;
+Fdop_p1 = signal_struct_Mx.Fdop_p1;
+
+
+Tau2 = signal_struct_Mx.Tau2 ; % длительность импульса  2 c параметрами
+t_target2 = signal_struct_Mx.t_target2;
+
+A_s2 = signal_struct_Mx.A_s2;
+phi_s2 = signal_struct_Mx.phi_s2; 
+Fdop_s2 = signal_struct_Mx.Fdop_s2;
+
+A_p2 = signal_struct_Mx.A_p2;
+phi_p2 = signal_struct_Mx.phi_p2;
+Fdop_p2 = signal_struct_Mx.Fdop_p2;
+
+% задаем шум на входе
+sigma_1 = signal_struct_Mx.sigma_1;
+flag_noise_on = signal_struct_Mx.flag_noise_on;
+flag_signal_on = signal_struct_Mx.flag_signal_on;
+
+% определяем параметры квантования по уровню
+Nbit = signal_struct_Mx.Nbit ; % количество бит
+Vp = signal_struct_Mx.Vp;     % диапазон
+
+
+
+
+Ts = 1/Fs; % время выборки
+T_max = N * T; % время наблюдения 
+t = 0 : Ts : T_max-Ts; % текущее время 
+
+D1(:,1) = Tau1/2 + t_target1:T:T_max-T+Tau1/2+t_target1; % вектор задержек
+D1(:,2) = ones(1,N)'; % вектор амплитуд
+
+D2(:,1) = Tau2/2 + t_target2:T:T_max-T+Tau2/2+t_target2; % вектор задержек
+D2(:,2) = ones(1,N)'; % вектор амплитуд
+
+% количество точек на период
+%KTNP = ceil(T/Ts);
+
+% огибающая
+S1 = pulstran(t,D1,'rectpuls',Tau1);
+S2 = pulstran(t,D2,'rectpuls',Tau2);
+
+
+
+    %Sf1 = A_s1*cos(2*pi*(F+Fdop_s1)*t + phi_s1) + A_p1*cos(2*pi*(F+Fdop_p1)*t + phi_p1) ;
+    %Sf2 = A_s2*cos(2*pi*(F+Fdop_s2)*t + phi_s2) + A_p2*cos(2*pi*(F+Fdop_p2)*t + phi_p2) ;
+
+    
+    Sf1 = A_s1*exp(1i*(2*pi*(F+Fdop_s1)*t + phi_s1)) + A_p1*exp(1i*(2*pi*(F+Fdop_p1)*t + phi_p1)) ;
+    Sf2 = A_s2*exp(1i*(2*pi*(F+Fdop_s2)*t + phi_s2)) + A_p2*exp(1i*(2*pi*(F+Fdop_p2)*t + phi_p2)) ;
+    
+    
+    
+    
+    
+    % огибающая с несущей и частотой доплера
+    St1 = S1 .* Sf1;
+    St2 = S2 .* Sf2;
+    N_t = length(St1);
+    St=St1 + St2;  
+
+    if flag_noise_on ==1    
+        noise = normrnd(0,sigma_1,[1 N_t]);
+    else
+        noise = zeros(1,N_t);  
+    end
+    
+    if flag_signal_on ==0  
+        St = zeros(1,N_t); 
+    end
+
+    St = St + noise;
+    
+
+    
+    Signal_noise_in_complex  =    St;
+    
+    %% нормировка
+Signal_noise_in_complex = Signal_noise_in_complex / max(abs(Signal_noise_in_complex)); 
+
+
+%% просто децимация
+R=10;
+Signal_noise_in_complex =  Signal_noise_in_complex(1:R:end);
+t = t(1:R:end);
+
+%% квантование
+
+   Signal_noise_in_complex  =     double(uencode(Signal_noise_in_complex, Nbit, Vp, 'signed'));
+   
+    
+    if flag_draw == 1
+     figure(1); 
+     subplot(2,1,1)
+     plot(t,real(Signal_noise_in_complex))  
+     title('real Signal_{noise_{in}}');  
+     xlabel('s');
+     ylabel('A');
+     grid on;  
+     
+     subplot(2,1,2)
+     plot(t,imag(Signal_noise_in_complex))  
+     title('imag Signal_{noise_{in}}');  
+     xlabel('s');
+     ylabel('A');
+     grid on;  
+     
+     
+    end             
+end

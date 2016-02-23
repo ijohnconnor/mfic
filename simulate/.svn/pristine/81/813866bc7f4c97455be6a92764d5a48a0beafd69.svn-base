@@ -1,0 +1,9 @@
+function [ F_out ] = func_bb_new( F_init,M,N,koff )
+ M_N = ceil(M/N);
+ %сдвиг на M/N
+ v(1,:) = (circshift(F_init',-M_N))';  
+ v(2,:) = F_init;
+ v(3,:) = (circshift(F_init',M_N))';   
+ F_out = func_wmod_bb (v,M/2, koff);
+end
+

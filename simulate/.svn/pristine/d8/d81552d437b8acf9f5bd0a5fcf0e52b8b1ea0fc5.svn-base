@@ -1,0 +1,6 @@
+function y_abs = func_mdif_bb (v,MMax,al)
+            
+for n=1:2*MMax
+    y_abs(n) = al*abs(v(2,n)) - ((1-al)/2)*( abs( v(1, n) ) + abs( v(3,n) ) ) ;
+    
+end ;

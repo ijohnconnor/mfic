@@ -1,0 +1,18 @@
+
+    function y = func_hann_bb( v,MMax,bt ) 
+    
+    vc = real(v);
+    vs = imag(v);
+        
+    %bt = 0.5;    
+        
+        
+for n=1:2*MMax
+    
+            yc(n) = bt*vc(2,n) - ((1-bt)/2) *  ( vc(3,n) + vc(1, n) ) ;
+            ys(n) = bt*vs(2,n) - ((1-bt)/2) *  ( vs(3,n) + vs(1, n) ) ;
+            
+end;
+
+y = complex (yc,ys);
+    
