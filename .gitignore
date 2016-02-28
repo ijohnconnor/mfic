@@ -1,4 +1,1 @@
 $ cat .gitignore
-*.mat
-*.dat
-*.m
